@@ -1,0 +1,72 @@
+version: '3.5'
+
+volumes:
+  mysql-data: {}
+
+services:
+  redis:
+    image: redis:5
+    restart: always
+    command: redis-server --requirepass 123456
+    expose:
+      - "6379"
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+    ports:
+      - "3306:3306"
+    volumes:
+      #- "src/docker-compose/mysql/my.cnf:/etc/mysql/my.cnf"
+      - "mysql-data:/var/lib/mysql"
+    environment:
+      MYSQL_DATABASE: archery
+      MYSQL_ROOT_PASSWORD: "123456"
+      #MYSQL_ROOT_PASSWORD: 'mSKPass&365'
+
+  #inception:
+  #  image: hhyo/inception
+  #  restart: always
+  #  expose:
+  #    - "6669"
+  #  volumes:
+  #    - "src/docker-compose/inception/inc.cnf:/etc/inc.cnf"
+
+  goinception:
+    image: hanchuanchuan/goinception
+    restart: always
+    ports:
+      - "4000:4000"
+    volumes:
+      - "./src/docker-compose/inception/config.toml:/etc/config.toml"
+
+  django-q:
+    build: ./
+    #image: hhyo/archery:v1.8.3
+    restart: always
+    volumes:
+      - "./src/docker-compose/archery/settings.py:/opt/archery/archery/settings.py:ro"
+      - "./src/docker-compose/archery/soar.yaml:/etc/soar.yaml:ro"
+      - "./src/docker-compose/archery/sql/migrations:/opt/archery/sql/migrations:ro"
+      - "./src/docker-compose/archery/logs:/opt/archery/logs:ro"
+      - "./src/docker-compose/archery/keys:/opt/archery/keys:ro"
+    command: python3 manage.py qcluster
+
+  archery:
+    build: ./
+    #image: hhyo/archery:v1.8.3
+    restart: always
+    ports:
+      - "9123:9123"
+    volumes:
+      - "./src/docker-compose/archery/settings.py:/opt/archery/archery/settings.py"
+      - "./src/docker-compose/archery/soar.yaml:/etc/soar.yaml"
+      - "./src/docker-compose/archery/docs.md:/opt/archery/docs/docs.md"
+      - "./src/docker-compose/archery/downloads:/opt/archery/downloads"
+      - "./src/docker-compose/archery/sql/migrations:/opt/archery/sql/migrations"
+      - "./src/docker-compose/archery/logs:/opt/archery/logs"
+      - "./src/docker-compose/archery/keys:/opt/archery/keys"
+    #entrypoint: "dockerize -wait tcp://mysql:3306 -wait tcp://redis:6379 -timeout 60s /opt/archery/src/docker/startup.sh"
+    environment:
+      NGINX_PORT: 9123

@@ -1,0 +1,37 @@
+FROM python:3.8
+
+WORKDIR /opt/archery
+
+COPY ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+
+#archery
+#RUN cd /opt \
+#    && yum -y install nginx \
+#    && source /opt/venv4archery/bin/activate \
+#    && pip3 install -r /opt/archery/requirements.txt \
+#    && cp /opt/archery/src/docker/nginx.conf /etc/nginx/ \
+#    && cp /opt/archery/src/docker/supervisord.conf /etc/ \
+#    && mv /opt/sqladvisor /opt/archery/src/plugins/ \
+#    && mv /opt/soar /opt/archery/src/plugins/ \
+#    && mv /opt/tmp_binlog2sql /opt/archery/src/plugins/binlog2sql \
+#    && mv /opt/my2sql /opt/archery/src/plugins/
+
+RUN set -ex \
+    ; apt-get install -y --no-install-recommends \
+      python3-dev default-libmysqlclient-dev build-essential gcc \
+      unixodbc-dev unixodbc libpq-dev \
+    ; rm -rf /var/lib/apt/lists/*
+
+COPY ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+
+COPY ./ ./
+
+#port
+EXPOSE 9123
+
+#start service
+#ENTRYPOINT bash /opt/archery/src/docker/startup.sh && bash
+# CMD python3 manage.py qcluster
+CMD python3 manage.py runserver 0.0.0.0:9123  --insecure
