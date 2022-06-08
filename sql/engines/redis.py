@@ -61,10 +61,15 @@ class RedisEngine(EngineBase):
     def query_check(self, db_name=None, sql='', limit_num=0):
         """提交查询前的检查"""
         result = {'msg': '', 'bad_query': True, 'filtered_sql': sql, 'has_star': False}
+        #safe_cmd = ["scan", "exists", "ttl", "pttl", "type", "get", "mget", "strlen",
+        #            "hgetall", "hexists", "hget", "hmget", "hkeys", "hvals",
+        #            "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex",
+        #            "zrange","zrangebyscore","zscore","zcard","zcount","zrank"]
         safe_cmd = ["scan", "exists", "ttl", "pttl", "type", "get", "mget", "strlen",
                     "hgetall", "hexists", "hget", "hmget", "hkeys", "hvals",
                     "smembers", "scard", "sdiff", "sunion", "sismember", "llen", "lrange", "lindex",
-                    "zrange","zrangebyscore","zscore","zcard","zcount","zrank"]
+                    "zrange","zrangebyscore","zscore","zcard","zcount","zrank",
+                    "keys", "del", "expire", "expireat", "rename"]
         # 命令校验，仅可以执行safe_cmd内的命令
         for cmd in safe_cmd:
             if re.match(fr'^{cmd}', sql.strip(), re.I):
